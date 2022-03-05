@@ -1,0 +1,8 @@
+C:\FileManager\FileManager\bin\Debug\FileManager.exe.config
+C:\FileManager\FileManager\bin\Debug\FileManager.exe
+C:\FileManager\FileManager\bin\Debug\FileManager.pdb
+C:\FileManager\FileManager\obj\Debug\FileManager.csproj.CoreCompileInputs.cache
+C:\FileManager\FileManager\obj\Debug\FileManager.exe
+C:\FileManager\FileManager\obj\Debug\FileManager.pdb
+C:\FileManager\FileManager\obj\Debug\FileManager.csproj.AssemblyReference.cache
+C:\FileManager\FileManager\obj\Debug\FileManager.csproj.SuggestedBindingRedirects.cache
