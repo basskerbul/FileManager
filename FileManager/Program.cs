@@ -6,90 +6,273 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 
+
 namespace FileManager
 {
-    //Почему-то юзерская переманная пути записана не верно. Не знаю, где ее сбросить
-    //Если выводить путь на экран- папки выводятся через один знак \
-    //А если навести мышку на переменную путь, то там через два \\
+    
     class Program
     {
-        static void PrintFiles(string path)
+        //Если команда не распознана
+        static void CommandDontFound()
         {
-            string[] files = Directory.GetFiles(path);
-            foreach (string file in files)
+            Console.Clear();
+            PageDirectories();
+            InformationWindow(Properties.Settings.Default.Path);
+            Frame("up");
+            Console.WriteLine(Properties.Settings.Default.Format, "Команда не распознана. Введите help");
+            Frame("down");
+        }
+        static void Frame(string side)
+        {
+            if(side == "up")
+                Console.WriteLine("╔════════════════════════════════════════════════════════╗");
+
+            if(side == "down")
+                Console.WriteLine("╚════════════════════════════════════════════════════════╝");
+
+            if (side == "trans")
+                Console.WriteLine("╠════════════════════════════════════════════════════════╣");
+
+            if (side == "trans1")
+                Console.WriteLine(Properties.Settings.Default.Format, "");
+
+            if(side == "message")
             {
-                try
-                {
-                    Console.WriteLine($"------{file}");
-                }
-                catch { continue; }
+                Frame("up");
+                Console.WriteLine(Properties.Settings.Default.Format, "Отказано в доступе по пути");
+                Frame("down");
             }
         }
-        static void PageDirectories(string path, int userpage)
+        //Информация
+        static void InformationWindow(string path)
         {
-            int Page = userpage * Properties.Settings.Default.PageSize;
-            Console.Clear();
-            string[] Dirs = Directory.GetDirectories(path);
-            for (int i = Page; i < Page + Properties.Settings.Default.PageSize;)
+            if(path == @"C:\\")
+            {
+                DriveInfo[] drive = DriveInfo.GetDrives();
+                Frame("trans");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Имя диска: {drive[0].Name}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Тип диска: {drive[0].DriveType}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Имя файловой системы: {drive[0].DriveFormat}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Доступно памяти: {drive[0].AvailableFreeSpace}Byte");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Размер диска: {drive[0].TotalSize} Byte");
+                Frame("down");
+            }
+            else
+            {
+                DirectoryInfo di = new DirectoryInfo(path);
+                Frame("trans");
+                Console.WriteLine(Properties.Settings.Default.Format, "Information:");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Имя: {di.Name}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Путь: {di.FullName}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Время создания: {di.CreationTime}");
+                Console.WriteLine(Properties.Settings.Default.Format, $"Последнее изменение: {di.LastWriteTime}");
+                Frame("down");
+            }
+        }
+        //Распознование сложных команд
+        static void Recognition(string uc)
+        {
+            string[] arr = uc.Split(' ');
+            if(arr[0] == "info")
+            {
+                string path = $@"{Properties.Settings.Default.Path}{arr[1]}";
+                DirectoryInfo file = new DirectoryInfo(path);
+
+                PageDirectories();
+                InformationWindow(path);
+            }
+            //удаление файла
+            else if(arr[0] == "delete")
+            {
+                string file = $@"{Properties.Settings.Default.Path}{arr[1]}";
+                if (File.Exists(file)) 
+                {
+                    File.Delete(file);
+                    PageDirectories();
+                    InformationWindow(Properties.Settings.Default.Path);
+                }
+                else
+                {
+                    CommandDontFound();
+                }
+            }
+            //копирование файлов
+            else if(arr[0] == "copy")
+            {
+                string s1 = $@"{Properties.Settings.Default.Path}\{arr[1]}";
+                string s2 = $@"{Properties.Settings.Default.Path}\{arr[2]}";
+                if (File.Exists(s1))
+                {
+                    File.Copy(s1, s2);
+                    PageDirectories();
+                    InformationWindow(Properties.Settings.Default.Path);
+                }
+                else
+                {
+                    CommandDontFound();
+                }
+            }
+            else if(arr[0] == "cd") 
+            {
+                //выход из папки
+                if (arr[1] == "..")
+                {
+                    //Проверка на попытку выйти на несуществующий уровень
+                    if (Properties.Settings.Default.Path == @"C:\")
+                    {
+                        Console.Clear();
+                        PageDirectories();
+                        InformationWindow(Properties.Settings.Default.Path);
+                        Frame("up");
+                        Console.WriteLine(Properties.Settings.Default.Format, "Выход на уровень выше невозможен");
+                        Frame("down");
+
+                    }
+                    else
+                    {
+                        string[] arr1 = Properties.Settings.Default.Path.Split('\\');
+                        Properties.Settings.Default.Page = 0;
+                        Properties.Settings.Default.Path = "";
+
+                        for (int i = 0; i < arr1.Length - 2; i++)
+                        {
+                            Properties.Settings.Default.Path = $"{Properties.Settings.Default.Path}{arr1[i]}\\";
+                        }
+                        Properties.Settings.Default.Save();
+
+                        PageDirectories();
+                        InformationWindow(Properties.Settings.Default.Path);
+                    }
+                }
+                //вход в указанную папку
+                else
+                {
+                    Properties.Settings.Default.Page = 0;
+                    string path = Properties.Settings.Default.Path + arr[1] + $"\\";
+                    DirectoryInfo di = new DirectoryInfo(path);
+                    if (di.Exists)
+                    {
+                        Properties.Settings.Default.Path = path;
+                        PageDirectories();
+                        InformationWindow(Properties.Settings.Default.Path);
+                    } else
+                    {
+                        CommandDontFound();
+                    }
+                }            
+            }
+            else
+            {
+                CommandDontFound();
+            }
+        }
+        //Вывод достапных файлов
+        static void PrintFiles()
+        {
+
+            string[] files = Directory.GetFiles(Properties.Settings.Default.Path);
+
+            Console.WriteLine(@"╠{0, -56}║", "══════╗");
+            string sep = "╠";
+            for (int i = 0; i < files.Length;)
             {
                 try
                 {
-                    if (Dirs.Length <= i)
+                    if (files.Length <= 1)
                         break;
-                    Console.WriteLine(Dirs[i]);
+                    string[] allname = files[i].Split('\\');
+
+                    if (i == files.Length - 1)
+                        sep = "╚";
+
+                    Console.WriteLine(Properties.Settings.Default.Format, $"      {sep}{allname[allname.Length - 1]}");
                     i++;
                 }
-                catch { continue; }
+                catch
+                { continue; }
             }
+            Frame("trans1");
+        }
+        //Постраничный вывод доступных папок
+        static void PageDirectories()
+        {
+            //Проверка на попытку выйти на несуществующую страницу
+            if (Properties.Settings.Default.Page < 0)
+            {
+                Properties.Settings.Default.Page = 0;
+                Properties.Settings.Default.Save();
+            }
+            int skip = Properties.Settings.Default.Page * Properties.Settings.Default.PageSize + Properties.Settings.Default.PageSize;
+            
+            try {
+                string[] Dirs = Directory.GetDirectories(Properties.Settings.Default.Path);
+                Frame("up");
+                for (int i = Properties.Settings.Default.Page * Properties.Settings.Default.PageSize; i < skip;)
+                {
+                    try
+                    {
+                        if (Dirs.Length <= i)
+                            break;
+                        string[] dirname = Dirs[i].Split('\\');
+                        Console.WriteLine(Properties.Settings.Default.Format, $" {dirname[dirname.Length - 1]}");
+                        
+                        i++;
+                    }
+                    catch { continue; }
+                }
+                PrintFiles();
+            }
+            catch
+            {
+                Console.Clear();
+                Properties.Settings.Default.Path = @"C:\";
+                Properties.Settings.Default.Save();
+                PageDirectories();
+                InformationWindow(Properties.Settings.Default.Path);
+                Frame("message");
+            }
+
+            
         }
         static void Main(string[] args)
         {
-            int Page = 0;
-            string Path = @"C:\";
-            PageDirectories(Properties.Settings.Default.Path, Page);
+            Console.Title = "File Manager";
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.SetWindowSize(59, 30);
+
+            Properties.Settings.Default.Path = @"C:\";
+            Properties.Settings.Default.Page = 0;
+            PageDirectories();
+            InformationWindow(Properties.Settings.Default.Path);
 
             while (true)
             {
-                Console.WriteLine($"Это мой путь {Properties.Settings.Default.Path}");
                 string UserCommand = Console.ReadLine();
-                if(UserCommand == "exit")
-                {
-                    Properties.Settings.Default.Path = Path;
-                    Properties.Settings.Default.Save();
-                    break;
-                }
+                Console.Clear();
+                //простые команды
                 switch(UserCommand)
                 {
+                    //вызов списка команд
                     case "help":
                         Help();
                         break;
+                    //следующая страница
                     case "next":
-                        Page++;
-                        PageDirectories(Properties.Settings.Default.Path, Page);
-                        break;
-                    case "back":
-                        Page--;
-                        PageDirectories(Properties.Settings.Default.Path, Page);
-                        break;
-                    case "cd":
-                        Console.WriteLine("Введите имя папки: ");
-                        string InDir = Console.ReadLine();
-                        Page = 0;
-                        Properties.Settings.Default.Path = Properties.Settings.Default.Path + InDir + @"\";
+                        Properties.Settings.Default.Page++;
+                        PageDirectories();
+                        InformationWindow(Properties.Settings.Default.Path);
                         Properties.Settings.Default.Save();
-                        PageDirectories(Properties.Settings.Default.Path, Page);
                         break;
-                    case "cd ..":
-                        string[] arr = Properties.Settings.Default.Path.Split('\\');
-                        Page = 0;
-                        Properties.Settings.Default.Path = "";
-                        for(int i = 0; i < arr.Length - 2; i++)
-                        {
-                            Properties.Settings.Default.Path = $"{Path}{arr[i]}\\";
-                        }
-                        PageDirectories(Properties.Settings.Default.Path, Page);
+                    //предыдущая страница
+                    case "back":
+                        Properties.Settings.Default.Page--;
+                        PageDirectories();
+                        InformationWindow(Properties.Settings.Default.Path);
                         break;
-                   
+                    default:
+                        try { Recognition(UserCommand); }
+                        catch { CommandDontFound(); }
+                        break;
                 }
             }
             
@@ -97,11 +280,23 @@ namespace FileManager
         static void Help()
         {
             Console.Clear();
-            Console.WriteLine("next     следующая страница");
-            Console.WriteLine("back     предыдущая страница");
-            Console.WriteLine("cd       подняться на уровень выше");
-            Console.WriteLine("cd ..    вернуться на уровень ниже");
-            Console.WriteLine("exit     выйти с сохранением прогресса");
+            Frame("up");
+            Console.WriteLine(Properties.Settings.Default.Format, "Следующая страница");
+            Console.WriteLine(Properties.Settings.Default.Format, "     next");
+            Console.WriteLine(Properties.Settings.Default.Format, "Предыдущая страница");
+            Console.WriteLine(Properties.Settings.Default.Format, "     back");
+            Console.WriteLine(Properties.Settings.Default.Format, "Открыть папку");
+            Console.WriteLine(Properties.Settings.Default.Format, "     cd имя_папки");
+            Console.WriteLine(Properties.Settings.Default.Format, "Выйти из текущей папки");
+            Console.WriteLine(Properties.Settings.Default.Format, "     cd ..");
+            Console.WriteLine(Properties.Settings.Default.Format, "Копировать файл");
+            Console.WriteLine(Properties.Settings.Default.Format, "*имя файла указывается с расширением");
+            Console.WriteLine(Properties.Settings.Default.Format, "     copy имя_файла имя_копии");
+            Console.WriteLine(Properties.Settings.Default.Format, "Удаление файла");
+            Console.WriteLine(Properties.Settings.Default.Format, "     delete имя_файла");
+            Console.WriteLine(Properties.Settings.Default.Format, "Просмотр информации о файле");
+            Console.WriteLine(Properties.Settings.Default.Format, "     info имя_файла");
+            Frame("down");
         }
     }
 }

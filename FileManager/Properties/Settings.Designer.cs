@@ -25,7 +25,7 @@ namespace FileManager.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("7")]
+        [global::System.Configuration.DefaultSettingValueAttribute("8")]
         public int PageSize {
             get {
                 return ((int)(this["PageSize"]));
@@ -41,6 +41,27 @@ namespace FileManager.Properties {
             }
             set {
                 this["Path"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int Page {
+            get {
+                return ((int)(this["Page"]));
+            }
+            set {
+                this["Page"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("║{0, -56}║")]
+        public string Format {
+            get {
+                return ((string)(this["Format"]));
             }
         }
     }
