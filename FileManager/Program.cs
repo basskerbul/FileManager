@@ -12,7 +12,9 @@ namespace FileManager
     
     class Program
     {
-        //Если команда не распознана
+        /// <summary>
+        /// Окно предупреждения
+        /// </summary>
         static void CommandDontFound()
         {
             Console.Clear();
@@ -21,7 +23,13 @@ namespace FileManager
             Frame("up");
             Console.WriteLine(Properties.Settings.Default.Format, "Команда не распознана. Введите help");
             Frame("down");
+
+            File.AppendAllText(Properties.Settings.Default.PathFErr, "\nКоманда не распознана");
         }
+        /// <summary>
+        /// Оформление окон
+        /// </summary>
+        /// <param name="side"></param>
         static void Frame(string side)
         {
             if(side == "up")
@@ -41,9 +49,14 @@ namespace FileManager
                 Frame("up");
                 Console.WriteLine(Properties.Settings.Default.Format, "Отказано в доступе по пути");
                 Frame("down");
+
+                File.AppendAllText(Properties.Settings.Default.PathFErr, "\nОтказано в доступе по указанному пути");
             }
         }
-        //Информация
+        /// <summary>
+        /// Окно информации
+        /// </summary>
+        /// <param name="path"></param>
         static void InformationWindow(string path)
         {
             if(path == @"C:\\")
@@ -69,22 +82,26 @@ namespace FileManager
                 Frame("down");
             }
         }
-        //Распознование сложных команд
+        /// <summary>
+        /// Распознование сложных команд
+        /// </summary>
+        /// <param name="uc"></param>
         static void Recognition(string uc)
         {
             string[] arr = uc.Split(' ');
+            //вывод информации о файле
             if(arr[0] == "info")
             {
-                string path = $@"{Properties.Settings.Default.Path}{arr[1]}";
-                DirectoryInfo file = new DirectoryInfo(path);
-
+                string[] obj = uc.Split('/');
+                string path = $@"{Properties.Settings.Default.Path}{obj[1]}";
                 PageDirectories();
                 InformationWindow(path);
             }
             //удаление файла
             else if(arr[0] == "delete")
             {
-                string file = $@"{Properties.Settings.Default.Path}{arr[1]}";
+                string[] obj = uc.Split('/');
+                string file = $@"{Properties.Settings.Default.Path}{obj[1]}";
                 if (File.Exists(file)) 
                 {
                     File.Delete(file);
@@ -99,8 +116,9 @@ namespace FileManager
             //копирование файлов
             else if(arr[0] == "copy")
             {
-                string s1 = $@"{Properties.Settings.Default.Path}\{arr[1]}";
-                string s2 = $@"{Properties.Settings.Default.Path}\{arr[2]}";
+                string[] obj = uc.Split('/');
+                string s1 = $@"{Properties.Settings.Default.Path}{obj[1]}";
+                string s2 = $@"{Properties.Settings.Default.Path}{obj[3]}";
                 if (File.Exists(s1))
                 {
                     File.Copy(s1, s2);
@@ -126,7 +144,7 @@ namespace FileManager
                         Frame("up");
                         Console.WriteLine(Properties.Settings.Default.Format, "Выход на уровень выше невозможен");
                         Frame("down");
-
+                        File.AppendAllText(Properties.Settings.Default.PathFErr, "\nВыход из диска невозможен");
                     }
                     else
                     {
@@ -166,7 +184,9 @@ namespace FileManager
                 CommandDontFound();
             }
         }
-        //Вывод достапных файлов
+        /// <summary>
+        /// Вывод файлов
+        /// </summary>
         static void PrintFiles()
         {
 
@@ -189,11 +209,16 @@ namespace FileManager
                     i++;
                 }
                 catch
-                { continue; }
+                { 
+                    continue;
+                    File.AppendAllText(Properties.Settings.Default.PathFErr, "\nФайл не доступен. Требуются права администратора");
+                }
             }
             Frame("trans1");
         }
-        //Постраничный вывод доступных папок
+        /// <summary>
+        /// Постраничный вывод папок
+        /// </summary>
         static void PageDirectories()
         {
             //Проверка на попытку выйти на несуществующую страницу
@@ -218,7 +243,11 @@ namespace FileManager
                         
                         i++;
                     }
-                    catch { continue; }
+                    catch 
+                    { 
+                        continue;
+                        File.AppendAllText(Properties.Settings.Default.PathFErr, "\nПапка не доступна. Требуются права администратора");
+                    }
                 }
                 PrintFiles();
             }
@@ -240,7 +269,7 @@ namespace FileManager
             Console.ForegroundColor = ConsoleColor.Red;
             Console.SetWindowSize(59, 30);
 
-            Properties.Settings.Default.Path = @"C:\";
+
             Properties.Settings.Default.Page = 0;
             PageDirectories();
             InformationWindow(Properties.Settings.Default.Path);
@@ -277,6 +306,9 @@ namespace FileManager
             }
             
         }
+        /// <summary>
+        /// Список команд
+        /// </summary>
         static void Help()
         {
             Console.Clear();
@@ -291,11 +323,11 @@ namespace FileManager
             Console.WriteLine(Properties.Settings.Default.Format, "     cd ..");
             Console.WriteLine(Properties.Settings.Default.Format, "Копировать файл");
             Console.WriteLine(Properties.Settings.Default.Format, "*имя файла указывается с расширением");
-            Console.WriteLine(Properties.Settings.Default.Format, "     copy имя_файла имя_копии");
+            Console.WriteLine(Properties.Settings.Default.Format, "     copy /имя_файла/ /имя_копии/");
             Console.WriteLine(Properties.Settings.Default.Format, "Удаление файла");
-            Console.WriteLine(Properties.Settings.Default.Format, "     delete имя_файла");
+            Console.WriteLine(Properties.Settings.Default.Format, "     delete /имя_файла/");
             Console.WriteLine(Properties.Settings.Default.Format, "Просмотр информации о файле");
-            Console.WriteLine(Properties.Settings.Default.Format, "     info имя_файла");
+            Console.WriteLine(Properties.Settings.Default.Format, "     info /имя_файла/");
             Frame("down");
         }
     }

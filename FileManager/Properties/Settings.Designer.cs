@@ -64,5 +64,17 @@ namespace FileManager.Properties {
                 return ((string)(this["Format"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\FileManager\\errors\\random_name_exception.txt")]
+        public string PathFErr {
+            get {
+                return ((string)(this["PathFErr"]));
+            }
+            set {
+                this["PathFErr"] = value;
+            }
+        }
     }
 }
